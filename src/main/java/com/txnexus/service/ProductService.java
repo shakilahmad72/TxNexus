@@ -20,14 +20,27 @@ public class ProductService {
         return productRepository.findAll();
     }
 
+    @Transactional(readOnly = true)
     public Product getProductById(Long id) {
-        return productRepository.findAllById(id)
+        return productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Product not found with id: " + id));
     }
 
+    @Transactional
     public Product createProduct(ProductRequest request) {
         Product product = Product.builder()
                 .name(request.getName())
+                .description(request.getDescription())
+                .price(request.getPrice())
+                .build();
+        return productRepository.save(product);
     }
 
+    @Transactional
+    public void deleteProduct(Long id) {
+        if (!productRepository.existsById(id)) {
+            throw new RuntimeException("Product not found with id: " + id);
+        }
+        productRepository.deleteById(id);
+    }
 }
