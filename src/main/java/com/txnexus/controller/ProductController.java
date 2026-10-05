@@ -3,6 +3,7 @@ package com.txnexus.controller;
 import com.txnexus.dto.ProductRequest;
 import com.txnexus.entity.Product;
 import com.txnexus.service.ProductService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -30,6 +31,16 @@ public class ProductController {
     @PostMapping
     public ResponseEntity<Product> createProduct(@PathVariable ProductRequest request) {
         return new ResponseEntity<>(productService.createProduct(request), HttpStatus.CREATED);
+    }
+
+    public ResponseEntity<Product> updateProduct(
+            @PathVariable
+            Long id,
+            @Valid
+            @RequestBody
+            ProductRequest request
+    ) {
+        return ResponseEntity.ok(productService.updateProduct(id, request));
     }
 
     @DeleteMapping("/{id}")

@@ -3,6 +3,7 @@ package com.txnexus.service;
 import com.txnexus.dto.ProductRequest;
 import com.txnexus.entity.Product;
 import com.txnexus.repository.ProductRepository;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,5 +43,10 @@ public class ProductService {
             throw new RuntimeException("Product not found with id: " + id);
         }
         productRepository.deleteById(id);
+    }
+
+    public Product updateProduct(Long id, @Valid ProductRequest request) {
+
+        return null;
     }
 }
