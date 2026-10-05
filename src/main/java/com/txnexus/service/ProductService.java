@@ -38,6 +38,12 @@ public class ProductService {
     }
 
     @Transactional
+    public Product updateProduct(Long id, @Valid ProductRequest request) {
+        return productRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Product not found with id: " + id));
+    }
+
+    @Transactional
     public void deleteProduct(Long id) {
         if (!productRepository.existsById(id)) {
             throw new RuntimeException("Product not found with id: " + id);
@@ -45,8 +51,5 @@ public class ProductService {
         productRepository.deleteById(id);
     }
 
-    public Product updateProduct(Long id, @Valid ProductRequest request) {
 
-        return null;
-    }
 }
