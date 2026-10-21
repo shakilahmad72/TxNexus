@@ -1,5 +1,6 @@
 package com.txnexus.order_service.entity;
 
+import com.txnexus.commondto.enums.OrderStatus;
 import jakarta.persistence.*;
 import lombok.*;
 

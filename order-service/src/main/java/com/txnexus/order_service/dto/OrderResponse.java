@@ -1,5 +1,6 @@
 package com.txnexus.order_service.dto;
 
+import com.txnexus.commondto.enums.OrderStatus;
 import lombok.Builder;
 import lombok.Data;
 
