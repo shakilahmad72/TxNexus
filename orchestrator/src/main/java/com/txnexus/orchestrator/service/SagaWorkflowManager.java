@@ -6,6 +6,7 @@ import com.txnexus.commondto.commands.ReleaseInventoryCommand;
 import com.txnexus.commondto.commands.ReserveInventoryCommand;
 import com.txnexus.commondto.enums.SagaStatus;
 import com.txnexus.commondto.events.OrderCreatedEvent;
+import com.txnexus.orchestrator.dto.SagaStateResponse;
 import com.txnexus.orchestrator.entity.SagaInstance;
 import com.txnexus.orchestrator.kafka.producer.CommandProducer;
 import com.txnexus.orchestrator.repository.SagaInstanceRepository;
@@ -84,7 +85,6 @@ public class SagaWorkflowManager {
 
         log.warn("Payment failed for Saga {}. Triggering inventory compensation...", sagaId);
 
-        // Compensation 1: Release reserved inventory
         ReleaseInventoryCommand releaseCommand = new ReleaseInventoryCommand(
                 saga.getSagaId(),
                 saga.getOrderId(),
@@ -93,12 +93,42 @@ public class SagaWorkflowManager {
         );
         commandProducer.sendCommand("inventory.commands", saga.getOrderId(), releaseCommand);
 
-        // Compensation 2: Cancel order in order-service
         CancelOrderCommand cancelCommand = new CancelOrderCommand(
                 saga.getSagaId(),
                 saga.getOrderId(),
                 reason
         );
         commandProducer.sendCommand("order.commands", saga.getOrderId(), cancelCommand);
+    }
+
+    @Transactional(readOnly = true)
+    public SagaStateResponse getSagaById(UUID sagaId) {
+        log.info("Fetching Saga state by sagaId: {}", sagaId);
+        SagaInstance saga = sagaRepository.findById(sagaId)
+                .orElseThrow(() -> new RuntimeException("Saga not found with ID: " + sagaId));
+        return mapToResponse(saga);
+    }
+
+    @Transactional(readOnly = true)
+    public SagaStateResponse getSagaByOrderId(UUID orderId) {
+        log.info("Fetching Saga state by orderId: {}", orderId);
+        SagaInstance saga = sagaRepository.findByOrderId(orderId)
+                .orElseThrow(() -> new RuntimeException("Saga not found for Order ID: " + orderId));
+        return mapToResponse(saga);
+    }
+
+    private SagaStateResponse mapToResponse(SagaInstance saga) {
+        return SagaStateResponse.builder()
+                .sagaId(saga.getSagaId())
+                .orderId(saga.getOrderId())
+                .status(saga.getStatus())
+                .customerId(saga.getCustomerId())
+                .productId(saga.getProductId())
+                .quantity(saga.getQuantity())
+                .totalAmount(saga.getTotalAmount())
+                .failureReason(saga.getFailureReason())
+                .createdAt(saga.getCreatedAt())
+                .updateAt(saga.getUpdateAt())
+                .build();
     }
 }
