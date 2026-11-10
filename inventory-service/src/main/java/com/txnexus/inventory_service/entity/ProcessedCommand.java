@@ -14,7 +14,7 @@ import java.time.Instant;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ProcessProcessedCommand {
+public class ProcessedCommand {
 
     @Id
     private String commandKey;
