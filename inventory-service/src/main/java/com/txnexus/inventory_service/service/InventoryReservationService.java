@@ -3,7 +3,10 @@ package com.txnexus.inventory_service.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.txnexus.commondto.commands.ReserveInventoryCommand;
 import com.txnexus.commondto.events.InventoryReservationFailedEvent;
+import com.txnexus.commondto.events.InventoryReservedEvent;
 import com.txnexus.inventory_service.entity.Inventory;
+import com.txnexus.inventory_service.entity.OutboxMessage;
+import com.txnexus.inventory_service.entity.ProcessedCommand;
 import com.txnexus.inventory_service.repository.InventoryRepository;
 import com.txnexus.inventory_service.repository.OutboxRepository;
 import com.txnexus.inventory_service.repository.ProcessedCommandRepository;
@@ -13,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.Optional;
 
 @Slf4j
@@ -52,7 +56,27 @@ public class InventoryReservationService {
             inventory.setReservedStock(inventory.getReservedStock() + command.quantity());
             inventoryRepository.save(inventory);
 
+            InventoryReservedEvent successEvent = new InventoryReservedEvent(
+                    command.sagaId(),
+                    command.orderId()
+            );
 
+            saveOutbox(command.orderId(), InventoryReservedEvent.class.getSimpleName(), successEvent);
+            log.info("Stock reserved for product: {}, quantity: {}", command.productId(), command.quantity());
         }
+
+        processedCommandRepository.save(new ProcessedCommand(commandKey, Instant.now()));
+    }
+
+    @SneakyThrows
+    private void saveOutbox(java.util.UUID orderId, String eventType, Object event) {
+        OutboxMessage outbox = OutboxMessage.builder()
+                .aggregateType("INVENTORY")
+                .aggregateId(orderId)
+                .eventType(eventType)
+                .payload(objectMapper.writeValueAsString(event))
+                .processed(false)
+                .build();
+        outboxRepository.save(outbox);
     }
 }
